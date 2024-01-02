@@ -27,7 +27,8 @@ private val codes = setOf(
     "random",
     "round",
     "index",
-    "entry"
+    "entry",
+    "player" // Deprecated in DF for a while but seeing as it still works as intended there's no reason for it to not parse in recode.
 )
 
 // TODO: new color scheme?

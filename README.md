@@ -1,3 +1,12 @@
+## recode-legacyfriendly
+A fork (more of a custom build) of recode with the intent of un-deprecating text hightlighting things that are
+"deprecated" but still work in DiamondFire. Currently, this fork only adds back support for %player.
+
+Original README below.
+
+---
+
+
 <!-- modrinth_exclude.start -->
 <div align="center">
   <img src="logo.png">
