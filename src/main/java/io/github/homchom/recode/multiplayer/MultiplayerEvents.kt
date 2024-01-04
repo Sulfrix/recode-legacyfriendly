@@ -13,7 +13,6 @@ import net.kyori.adventure.text.Component
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientPacketListener
 import net.minecraft.network.protocol.Packet
-
 import java.time.Duration as JDuration
 
 val JoinServerEvent = wrapFabricEvent(ClientPlayConnectionEvents.JOIN) { listener ->
@@ -28,8 +27,6 @@ data class ServerJoinContext(val handler: ClientPacketListener, val sender: Pack
 data class ServerDisconnectContext(val handler: ClientPacketListener, val client: Minecraft)
 
 val ReceiveGamePacketEvent = createEvent<Packet<*>>()
-
-val SendCommandEvent = createValidatedEvent<String>()
 
 object ReceiveChatMessageEvent : CustomEvent<SimpleValidated<Component>, Boolean> by createValidatedEvent() {
     private val cache = CacheBuilder.newBuilder()
