@@ -29,7 +29,7 @@ private val codes = setOf(
     "index",
     "entry",
     "player" // Deprecated in DF for a while but seeing as it still works as intended there's no reason for it to not parse in recode.
-)
+) //poke
 
 // TODO: new color scheme?
 private val colors = listOf(
