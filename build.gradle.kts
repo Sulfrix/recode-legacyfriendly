@@ -114,7 +114,7 @@ tasks {
         // these properties can be used in fabric_mod_json_template.txt in Groovy template syntax
         val exposedProperties = arrayOf(
             "modName" to modName,
-            "version" to version,
+            "version" to modVersion,
             "minecraftVersion" to minecraftVersion,
             "loaderVersion" to loaderVersion,
             "fabricVersion" to fabricVersion
@@ -125,7 +125,7 @@ tasks {
 
         // evaluate fabric_mod_json_template.txt as a Groovy template
         filesMatching("fabric_mod_json_template.txt") {
-            val metadataRegex = Regex("""\+[\d.]+?$""")
+            val metadataRegex = Regex("""\+.+$""")
             expand(
                 *exposedProperties,
                 "metadataRegex" to metadataRegex.toPattern(),
@@ -174,15 +174,14 @@ modrinth {
     projectId.set("recode")
     versionNumber.set(modVersionWithMeta)
 
-    val match = Regex("""-(beta|alpha)(\.)?""").find(modVersion)
+    val match = Regex("""-(?<phase>beta|alpha)\.""").find(modVersion)
     if (match == null) {
         versionName.set(modVersion)
         versionType.set("release")
     } else {
-        val type = match.groupValues[1]
-        val replacement = if (match.groups.size == 3) " $type " else " $type"
-        versionName.set(modVersion.replaceRange(match.range, replacement))
-        versionType.set(type)
+        val phase = match.groups["phase"]!!.value
+        versionName.set(modVersion.replaceRange(match.range, " $phase "))
+        versionType.set(phase)
     }
 
     // remove "LATEST" classifiers when uploading to modrinth
@@ -217,7 +216,7 @@ data class DependencyMod(
  * @return The list of [DependencyMod] values matching [type] in gradle.properties.
  */
 fun dependencyModsOfType(type: String): List<DependencyMod> {
-    val regex = Regex("""$type\.([a-z][a-z0-9-_]{1,63})\.artifact""")
+    val regex = Regex("""$type\.([^\.]+)\.artifact""")
     return properties.mapNotNull { (key, value) ->
         regex.matchEntire(key)?.let { match ->
             val id = match.groupValues[1]

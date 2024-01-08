@@ -2,7 +2,7 @@
 
 package io.github.homchom.recode.ui.text
 
-import io.github.homchom.recode.util.lib.fromCodePoint
+import io.github.homchom.recode.util.std.fromCodePoint
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import net.minecraft.util.FormattedCharSequence
@@ -18,6 +18,12 @@ fun Component.mergeStyle(
 ): Component {
     return style(style().merge(style, strategy, merges))
 }
+
+/**
+ * A shortcut for [Component.mergeStyle] with strategy [Style.Merge.Strategy.IF_ABSENT_ON_TARGET].
+ */
+fun Component.mergeStyleIfAbsent(style: Style, merges: Set<Style.Merge> = Style.Merge.all()) =
+    mergeStyle(style, Style.Merge.Strategy.IF_ABSENT_ON_TARGET, merges)
 
 /**
  * Returns a flattened [Sequence] of this [Component]'s nodes, where parent and child styles are recursively merged.
