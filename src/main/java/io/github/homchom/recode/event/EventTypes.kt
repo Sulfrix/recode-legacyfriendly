@@ -1,6 +1,7 @@
 package io.github.homchom.recode.event
 
 import io.github.homchom.recode.PowerSink
+import io.github.homchom.recode.multiplayer.Sender
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -19,7 +20,7 @@ typealias EventInvoker<T> = (context: T) -> Unit
  * explicitly, and *detectors*, which are run algorithmically (via a [io.github.homchom.recode.event.trial.Trial])
  * based on another Listenable.
  *
- * Listenable is based on the [Flow] API, but the standard [listenEachFrom] method does not allow for
+ * Listenable is based on the [Flow] API, but the standard [listenEach] method does not allow for
  * suspension. When working with [notifications] and the underlying Flow, collectors generally should
  * not suspend because Listenable implementations should be conflated. Listenable objects are also [PowerSink]s,
  * with a charge equal to the subscriber count of `notifications`.
@@ -40,7 +41,7 @@ interface Listenable<out T> : PowerSink {
 
     @Deprecated("Only for use in legacy Java code", ReplaceWith("TODO()"))
     @DelicateCoroutinesApi
-    fun register(action: Consumer<in T>) = listenEachFrom(GlobalScope, action::accept)
+    fun register(action: Consumer<in T>) = GlobalScope.listenEach(this, action::accept)
 }
 
 /**
@@ -48,17 +49,17 @@ interface Listenable<out T> : PowerSink {
  *
  * @see Listenable.notifications
  */
-fun <T> Listenable<T>.listenFrom(scope: CoroutineScope, block: Flow<T>.() -> Flow<T>) =
-    notifications.block().launchIn(scope)
+fun <T> CoroutineScope.listen(event: Listenable<T>, block: Flow<T>.() -> Flow<T>) =
+    event.notifications.block().launchIn(this)
 
 /**
  * Adds a listener, running [action] for each notification.
  *
- * @see listenFrom
+ * @see listen
  * @see Listenable.notifications
  */
-fun <T> Listenable<T>.listenEachFrom(scope: CoroutineScope, action: (T) -> Unit) =
-    listenFrom(scope) { onEach(action) }
+fun <T> CoroutineScope.listenEach(event: Listenable<T>, action: (T) -> Unit) =
+    listen(event) { onEach(action) }
 
 /**
  * A [Listenable] with a result of type [R].
@@ -115,7 +116,7 @@ interface Detector<T : Any, out R : Any> : StateListenable<R> {
 /**
  * A [Detector] that can execute code to request a result before detecting it.
  */
-interface Requester<T : Any, out R : Any> : Detector<T, R> {
+interface Requester<T : Any, out R : Any> : Sender<T, R?>, Detector<T, R> {
     /**
      * Makes a request and detects the first non-null result.
      *

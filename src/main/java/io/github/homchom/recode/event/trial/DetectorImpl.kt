@@ -1,10 +1,8 @@
 package io.github.homchom.recode.event.trial
 
 import io.github.homchom.recode.*
-import io.github.homchom.recode.event.Detector
-import io.github.homchom.recode.event.Listenable
-import io.github.homchom.recode.event.Requester
-import io.github.homchom.recode.event.createEvent
+import io.github.homchom.recode.event.*
+import io.github.homchom.recode.multiplayer.Sender
 import io.github.homchom.recode.ui.sendSystemToast
 import io.github.homchom.recode.ui.text.translatedText
 import io.github.homchom.recode.util.coroutines.lazyJob
@@ -56,14 +54,11 @@ private open class TrialDetector<T, R : Any>(
     private val event = createEvent<R, R> { it }
 
     private val power = Power(
+        extent = event,
         onEnable = {
             listenToTrials()
         }
     )
-
-    init {
-        power.extend(event)
-    }
 
     private val entries by lazy { ConcurrentLinkedDeque<DetectEntry<T, R>>() }
 
@@ -73,20 +68,14 @@ private open class TrialDetector<T, R : Any>(
     override fun detect(input: T?, hidden: Boolean) = responseFlow(input, false, hidden)
 
     protected fun responseFlow(input: T?, isRequest: Boolean, hidden: Boolean) = flow {
-        coroutineScope {
-            power.up()
-            val responses = Channel<R?>(Channel.UNLIMITED)
-            try {
-                // add entry after all current detection loops
-                launch(RecodeDispatcher) {
-                    yield()
-                    entries += DetectEntry(isRequest, input, responses, hidden)
-                }
-                while (isActive) emit(responses.receive())
-            } finally {
-                responses.close()
-                power.down()
-            }
+        power.up()
+        val responses = Channel<R?>(Channel.UNLIMITED)
+        try {
+            entries += DetectEntry(isRequest, input, responses, hidden)
+            while (currentCoroutineContext().isActive) emit(responses.receive())
+        } finally {
+            responses.close()
+            power.down()
         }
     }
 
@@ -94,7 +83,7 @@ private open class TrialDetector<T, R : Any>(
     // TODO: add more comments
     @OptIn(DelicateCoroutinesApi::class)
     private fun Power.listenToTrials() {
-        for (trialIndex in trials.indices) trials[trialIndex].results.listenEach { supplier ->
+        for (trialIndex in trials.indices) listenEach(trials[trialIndex].results) { supplier ->
             val successful = AtomicBoolean()
             if (entries.isEmpty()) {
                 considerEntry(trialIndex, null, supplier, successful)
@@ -180,14 +169,19 @@ private class TrialRequester<T, R : Any>(
     primaryTrial: RequesterTrial<T, R>,
     secondaryTrials: Array<out DetectorTrial<T, R>>,
     timeoutDuration: Duration
-) : TrialDetector<T, R>(name, arrayOf(primaryTrial, *secondaryTrials), timeoutDuration), Requester<T & Any, R> {
+) : TrialDetector<T, R>(name, arrayOf(primaryTrial, *secondaryTrials), timeoutDuration),
+    Requester<T & Any, R>,
+    Sender<T & Any, R?> by Sender(lifecycle, primaryTrial.start)
+{
     private val start = primaryTrial.start
 
     override suspend fun request(input: T & Any, hidden: Boolean) = withContext(NonCancellable) {
+        // we don't create a second Sender for performance
         lifecycle.notifications
             .onEach { cancel("${this@TrialRequester} lifecycle ended during a request") }
             .launchIn(this)
 
+        // detect first to prevent race conditions
         val detectChannel = responseFlow(input, true, hidden)
             .filterNotNull()
             .produceIn(this)

@@ -59,9 +59,10 @@ object DFStateDetectors : StateListenable<Case<DFState?>> by eventGroup {
                     ?: return@t null
                 LegacyCodeRemover.removeCodes(score.owner)
             }
-            val node = scoreboardNodeRegex.matchEntire(scoreboardText)!!
-                .groupValue("node")
-                .let(::nodeByName)
+            val node = scoreboardNodeRegex.matchEntire(scoreboardText)
+                ?.groupValue("node")
+                ?.let(::nodeByName)
+                ?: return@t null
             if (currentDFState is DFState.AtSpawn && node == currentDFState?.node) {
                 return@t null
             }
@@ -175,11 +176,10 @@ object DFStateDetectors : StateListenable<Case<DFState?>> by eventGroup {
         CustomEvent<Case<DFState?>, Case<DFState?>> by createEvent({ it }),
         StateListenable<Case<DFState?>>
 
-    private val power = Power()
+    private val power = Power(eventGroup)
 
     init {
         eventGroup.add(Manual)
-        power.extend(eventGroup)
     }
 
     /**
@@ -191,7 +191,7 @@ object DFStateDetectors : StateListenable<Case<DFState?>> by eventGroup {
         val oldState = currentDFState as? DFState.OnPlot ?: return
         val newState = DFState.AtSpawn(oldState.node, oldState.permissions, oldState.session)
         Manual.run(Case(newState))
-        DelayedCommandSender.sendCommandUnsafe("spawn")
+        unsafelySendCommand("spawn")
         showRecodeMessage(translatedText("recode.state.panicked"), RecodeMessageTags.alert)
     }
 
