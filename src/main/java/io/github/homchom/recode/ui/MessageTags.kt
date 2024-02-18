@@ -4,7 +4,7 @@ package io.github.homchom.recode.ui
 
 import io.github.homchom.recode.MOD_NAME
 import io.github.homchom.recode.render.ColorPalette
-import io.github.homchom.recode.render.IntegralColor
+import io.github.homchom.recode.render.RGB
 import io.github.homchom.recode.ui.text.*
 import net.kyori.adventure.text.ComponentLike
 import net.minecraft.client.GuiMessageTag
@@ -20,23 +20,23 @@ object RecodeMessageTags {
         ColorPalette.AQUA,
         "stacked x$amount",
         "stacked",
-        arrayOf(literalText(amount))
+        arrayOf(literalText(amount.toString()))
     )
 
     private fun tag(
-        color: IntegralColor,
+        color: RGB,
         string: String,
         translationKey: String = string,
         translationArgs: Array<out ComponentLike> = emptyArray()
     ): GuiMessageTag {
         return GuiMessageTag(
-            color.toInt(),
+            color.hex,
             GuiMessageTag.Icon.CHAT_MODIFIED,
             translatedText(
                 "chat.tag.recode.$translationKey",
                 style().color(color),
                 translationArgs
-            ).toVanilla(),
+            ).toVanillaComponent(),
             "$MOD_NAME $string"
         )
     }

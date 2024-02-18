@@ -5,10 +5,11 @@ package io.github.homchom.recode.ui
 import io.github.homchom.recode.MOD_LOGO_CHAR
 import io.github.homchom.recode.hypercube.MAIN_ARROW
 import io.github.homchom.recode.mc
+import io.github.homchom.recode.render.RGB
 import io.github.homchom.recode.ui.text.style
 import io.github.homchom.recode.ui.text.text
-import io.github.homchom.recode.ui.text.toVanilla
-import net.kyori.adventure.text.Component
+import io.github.homchom.recode.ui.text.toVanillaComponent
+import net.kyori.adventure.text.ComponentLike
 import net.minecraft.client.GuiMessageTag
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.components.toasts.SystemToast
@@ -18,8 +19,8 @@ import net.minecraft.client.gui.components.toasts.SystemToast
  *
  * @see showRecodeMessage
  */
-fun showMessage(message: Component, tag: GuiMessageTag = GuiMessageTag.system()) =
-    mc.gui.chat.addMessage(message.toVanilla(), null, tag)
+fun showMessage(message: ComponentLike, tag: GuiMessageTag = GuiMessageTag.system()) =
+    mc.gui.chat.addMessage(message.toVanillaComponent(), null, tag)
 
 /**
  * Shows the current player a styled "recode message", including a prefixed logo.
@@ -27,10 +28,10 @@ fun showMessage(message: Component, tag: GuiMessageTag = GuiMessageTag.system())
  *
  * @see RecodeMessageTags
  */
-fun showRecodeMessage(message: Component, tag: GuiMessageTag = RecodeMessageTags.info) {
+fun showRecodeMessage(message: ComponentLike, tag: GuiMessageTag = RecodeMessageTags.info) {
     val prefixed = text {
         literal("$MOD_LOGO_CHAR ")
-        literal("$MAIN_ARROW ", style().color(tag.indicatorColor).bold())
+        literal("$MAIN_ARROW ", style().color(RGB(tag.indicatorColor)).bold())
         append(message)
     }
     showMessage(prefixed, tag)
@@ -42,9 +43,11 @@ fun showRecodeMessage(message: Component, tag: GuiMessageTag = RecodeMessageTags
  */
 @JvmOverloads
 fun Minecraft.sendSystemToast(
-    title: Component,
-    body: Component,
+    title: ComponentLike,
+    body: ComponentLike,
     type: SystemToast.SystemToastId = SystemToast.SystemToastId.PERIODIC_NOTIFICATION
 ) {
-    toasts.addToast(SystemToast.multiline(this, type, title.toVanilla(), body.toVanilla()))
+    val titleText = title.toVanillaComponent()
+    val bodyText = body.toVanillaComponent()
+    toasts.addToast(SystemToast.multiline(this, type, titleText, bodyText))
 }

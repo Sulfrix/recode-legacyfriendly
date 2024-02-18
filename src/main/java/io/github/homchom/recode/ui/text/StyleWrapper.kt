@@ -1,70 +1,18 @@
 package io.github.homchom.recode.ui.text
 
 import io.github.homchom.recode.render.ColorPalette
-import io.github.homchom.recode.render.IntegralColor
+import io.github.homchom.recode.render.RGB
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
-import net.minecraft.util.FormattedCharSequence
-
-/**
- * Builds a composite [FormattedCharSequence] by applying [builder].
- *
- * Use [text] for higher-level [Component] creation, which supports more than literals.
- *
- * @see FormattedCharSequenceBuilder
- */
-inline fun formattedCharSequence(builder: FormattedCharSequenceBuilder.() -> Unit) =
-    FormattedCharSequenceBuilder().apply(builder).build()
 
 /**
  * Creates a [StyleWrapper].
  */
 fun style(initial: Style = Style.empty()) = StyleWrapper(initial.toBuilder())
-
-/**
- * @see forward
- * @see backward
- *
- * @see formattedCharSequence
- */
-@JvmInline
-value class FormattedCharSequenceBuilder private constructor(private val list: MutableList<FormattedCharSequence>) {
-    constructor() : this(mutableListOf())
-
-    fun build(): FormattedCharSequence = FormattedCharSequence.composite(list)
-
-    /**
-     * Appends [string] in forward order with [style].
-     */
-    fun forward(string: String, style: StyleWrapper = style()) {
-        list += FormattedCharSequence.forward(string, style.build().toVanilla())
-    }
-
-    /**
-     * Appends [string] in backward order with [style].
-     */
-    fun backward(string: String, style: StyleWrapper = style()) {
-        list += FormattedCharSequence.backward(string, style.build().toVanilla())
-    }
-
-    /**
-     * Appends the character with code point [code], with [style].
-     */
-    fun codepoint(code: Int, style: StyleWrapper = style()) {
-        list += FormattedCharSequence.codepoint(code, style.build().toVanilla())
-    }
-
-    /**
-     * Appends a pre-existing [formattedCharSequence].
-     */
-    fun append(formattedCharSequence: FormattedCharSequence) {
-        list += formattedCharSequence
-    }
-}
 
 /**
  * A wrapper class for idiomatic [Style] creation.
@@ -106,10 +54,8 @@ value class StyleWrapper(private val builder: Style.Builder) {
 
     fun white() = color(ColorPalette.WHITE)
 
-    fun color(color: IntegralColor) = color(color.toInt())
-
-    fun color(color: Int) = apply {
-        builder.color { color }
+    fun color(color: RGB) = apply {
+        builder.color { color.hex }
     }
 
     fun bold() = apply {
