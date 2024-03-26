@@ -4,13 +4,12 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.github.homchom.recode.event.listenEach
 import io.github.homchom.recode.feature.automation.AutoCommands
-import io.github.homchom.recode.feature.visual.FBuiltInResourcePacks
-import io.github.homchom.recode.feature.visual.FCodeSearch
-import io.github.homchom.recode.feature.visual.FSignRenderDistance
+import io.github.homchom.recode.feature.meta.FDebugMode
+import io.github.homchom.recode.feature.visual.*
 import io.github.homchom.recode.game.QuitGameEvent
 import io.github.homchom.recode.hypercube.JoinDFDetector
 import io.github.homchom.recode.mod.commands.CommandHandler
-import io.github.homchom.recode.mod.config.Config
+import io.github.homchom.recode.mod.config.LegacyConfig
 import io.github.homchom.recode.mod.config.internal.ConfigFile
 import io.github.homchom.recode.mod.config.internal.ConfigInstruction
 import io.github.homchom.recode.mod.config.internal.gson.ConfigSerializer
@@ -29,6 +28,7 @@ import io.github.homchom.recode.ui.text.translatedText
 import io.github.homchom.recode.util.regex.groupValue
 import io.github.homchom.recode.util.regex.regex
 import kotlinx.coroutines.runBlocking
+import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.ModContainer
@@ -39,7 +39,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-object Recode : ModContainer {
+object Recode : ClientModInitializer, ModContainer {
     /**
      * A prettified version of the mod's version. For example, "0.1.2-beta.3" is prettified to "0.1.2 beta 3".
      */
@@ -73,13 +73,18 @@ object Recode : ModContainer {
         // Visual
         FBuiltInResourcePacks
         FCodeSearch
+        FLagSlayerHUD
+        FMessageStacking
         FSignRenderDistance
+
+        // Meta
+        FDebugMode
     }
 
     /**
-     * Initializes the mod. This should only be called once, from an entrypoint.
+     * Initializes the mod. This should never be called directly.
      */
-    fun initialize() {
+    override fun onInitializeClient() {
         check(!isInitialized) { "$MOD_NAME has already been initialized" }
         logInfo("initializing...")
 
@@ -166,7 +171,7 @@ object LegacyRecode {
         initializer.add(LegacyEventHandler())
 
         // Initializes only if the given condition is met. (this case: config value)
-        initializer.addIf(SocketHandler(), Config.getBoolean("itemApi"))
+        initializer.addIf(SocketHandler(), LegacyConfig.getBoolean("itemApi"))
 
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, registryAccess ->
             CommandHandler.load(dispatcher, registryAccess)

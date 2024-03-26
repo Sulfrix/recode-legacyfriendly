@@ -5,12 +5,12 @@ import io.github.homchom.recode.event.*
 import io.github.homchom.recode.multiplayer.Sender
 import io.github.homchom.recode.ui.sendSystemToast
 import io.github.homchom.recode.ui.text.translatedText
-import io.github.homchom.recode.util.coroutines.lazyJob
+import io.github.homchom.recode.util.coroutines.derivedCoroutineScope
+import io.github.homchom.recode.util.coroutines.hasChildren
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
@@ -108,7 +108,7 @@ private open class TrialDetector<T, R : Any>(
         supplier: Trial.ResultSupplier<T & Any, R>,
         successful: AtomicBoolean
     ) {
-        val entryScope = CoroutineScope(power.coroutineContext + lazyJob())
+        val entryScope = derivedCoroutineScope(power)
         val result = entryScope.nonSuspendingTrialScope(entry?.hidden ?: false) {
             logDebug { "trial $trialIndex started for ${debugString(entry?.input, entry?.hidden)}" }
             supplier.supplyIn(
@@ -118,9 +118,12 @@ private open class TrialDetector<T, R : Any>(
             )
         }
 
-        fun finish(state: String) = entryScope.cancelAndLog(
-            "trial $trialIndex $state for ${debugString(entry?.input, entry?.hidden)}"
-        )
+        fun finish(state: String) {
+            if (entryScope.coroutineContext.job.hasChildren) {
+                val debugString = debugString(entry?.input, entry?.hidden)
+                entryScope.cancelAndLog("trial $trialIndex $state for $debugString")
+            }
+        }
 
         if (result == null) {
             finish("ended")

@@ -1,13 +1,10 @@
 package io.github.homchom.recode.sys.sidedchat;
 
 import com.google.common.collect.Lists;
-import io.github.homchom.recode.mod.config.Config;
-import io.github.homchom.recode.render.*;
+import io.github.homchom.recode.mod.config.LegacyConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
-import org.w3c.dom.css.RGBColor;
-
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -32,7 +29,7 @@ public class ChatPredicates {
     }
 
     public static String getCustomWordsString() {
-        return Config.getString("custom_filter");
+        return LegacyConfig.getString("custom_filter");
     }
 
     private static List<String> getCustomWords() {
