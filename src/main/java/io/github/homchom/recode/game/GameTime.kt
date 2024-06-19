@@ -1,3 +1,5 @@
+@file:JvmName("GameTime")
+
 package io.github.homchom.recode.game
 
 import io.github.homchom.recode.Power

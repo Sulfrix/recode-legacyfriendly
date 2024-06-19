@@ -129,8 +129,13 @@ interface Requester<T : Any, out R : Any> : Sender<T, R?>, Detector<T, R> {
 }
 
 /**
+ * @see CustomEvent.run
+ */
+fun <R : Any> CustomEvent<Unit, R>.run() = run(Unit)
+
+/**
  * @throws kotlinx.coroutines.TimeoutCancellationException
  *
  * @see Requester.request
  */
-suspend fun <R : Any> Requester<Unit, R>.request(): R = request(Unit)
+suspend fun <R : Any> Requester<Unit, R>.request() = request(Unit)
